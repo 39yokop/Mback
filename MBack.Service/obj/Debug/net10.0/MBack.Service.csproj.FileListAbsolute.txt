@@ -54,3 +54,4 @@ C:\Users\yokosuka\Nextcloud\developer\MBack\MBack.Service\obj\Debug\net10.0\refi
 C:\Users\yokosuka\Nextcloud\developer\MBack\MBack.Service\obj\Debug\net10.0\MBack.Service.pdb
 C:\Users\yokosuka\Nextcloud\developer\MBack\MBack.Service\obj\Debug\net10.0\MBack.Service.genruntimeconfig.cache
 C:\Users\yokosuka\Nextcloud\developer\MBack\MBack.Service\obj\Debug\net10.0\ref\MBack.Service.dll
+C:\Users\yokosuka\Nextcloud\developer\MBack\MBack.Service\obj\Debug\net10.0\MBack.Service.sourcelink.json

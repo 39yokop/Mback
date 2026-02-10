@@ -12,3 +12,4 @@ C:\Users\yokosuka\Nextcloud\developer\MBack\MBack.Config\obj\Debug\net10.0-windo
 C:\Users\yokosuka\Nextcloud\developer\MBack\MBack.Config\obj\Debug\net10.0-windows\MBack.Config.pdb
 C:\Users\yokosuka\Nextcloud\developer\MBack\MBack.Config\obj\Debug\net10.0-windows\MBack.Config.genruntimeconfig.cache
 C:\Users\yokosuka\Nextcloud\developer\MBack\MBack.Config\obj\Debug\net10.0-windows\ref\MBack.Config.dll
+C:\Users\yokosuka\Nextcloud\developer\MBack\MBack.Config\obj\Debug\net10.0-windows\MBack.Config.sourcelink.json

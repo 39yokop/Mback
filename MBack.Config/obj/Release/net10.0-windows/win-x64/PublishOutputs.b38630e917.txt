@@ -1,0 +1,2 @@
+C:\MBackRelease\MBack.Config.pdb
+C:\MBackRelease\MBack.Config.exe

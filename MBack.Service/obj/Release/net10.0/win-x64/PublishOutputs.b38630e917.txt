@@ -1,0 +1,4 @@
+C:\MBackRelease\appsettings.Development.json
+C:\MBackRelease\appsettings.json
+C:\MBackRelease\MBack.Service.pdb
+C:\MBackRelease\MBack.Service.exe
