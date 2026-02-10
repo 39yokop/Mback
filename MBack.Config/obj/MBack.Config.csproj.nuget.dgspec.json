@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\yokosuka\\Nextcloud\\developer\\MBack\\MBack.config\\MBack.Config.csproj": {}
+    "C:\\Users\\yokosuka\\Nextcloud\\developer\\MBack\\MBack.Config\\MBack.Config.csproj": {}
   },
   "projects": {
-    "C:\\Users\\yokosuka\\Nextcloud\\developer\\MBack\\MBack.config\\MBack.Config.csproj": {
+    "C:\\Users\\yokosuka\\Nextcloud\\developer\\MBack\\MBack.Config\\MBack.Config.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\yokosuka\\Nextcloud\\developer\\MBack\\MBack.config\\MBack.Config.csproj",
+        "projectUniqueName": "C:\\Users\\yokosuka\\Nextcloud\\developer\\MBack\\MBack.Config\\MBack.Config.csproj",
         "projectName": "MBack.Config",
-        "projectPath": "C:\\Users\\yokosuka\\Nextcloud\\developer\\MBack\\MBack.config\\MBack.Config.csproj",
+        "projectPath": "C:\\Users\\yokosuka\\Nextcloud\\developer\\MBack\\MBack.Config\\MBack.Config.csproj",
         "packagesPath": "C:\\Users\\yokosuka\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\yokosuka\\Nextcloud\\developer\\MBack\\MBack.config\\obj\\",
+        "outputPath": "C:\\Users\\yokosuka\\Nextcloud\\developer\\MBack\\MBack.Config\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\yokosuka\\AppData\\Roaming\\NuGet\\NuGet.Config",
