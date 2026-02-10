@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="MBack.Config/MBack.Config.csproj" />
+  <Project Path="MBack.Service/MBack.Service.csproj" />
+</Solution>

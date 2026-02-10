@@ -1,0 +1,7 @@
+﻿2026-02-10 14:43:56.383 +09:00 [INF] 設定を読み込み、監視体制を更新します...
+2026-02-10 14:43:56.383 +09:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-02-10 14:43:56.579 +09:00 [INF] --- 初期同期を開始 ---
+2026-02-10 14:43:56.587 +09:00 [INF] Hosting environment: Development
+2026-02-10 14:43:56.598 +09:00 [INF] Content root path: C:\Users\yokosuka\Nextcloud\developer\MBack\MBack.Service
+2026-02-10 14:44:57.911 +09:00 [INF] Application is shutting down...
+2026-02-10 14:45:19.767 +09:00 [INF] 監視開始: C:\Users\yokosuka\Nextcloud\developer
