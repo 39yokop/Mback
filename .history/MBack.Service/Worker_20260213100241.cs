@@ -110,122 +110,74 @@ private void ReloadAndRestartWatchers()
     }
 
     // --- 初期同期 (完全版: 削除・作成・コピー) ---
-    // ★修正版: 大規模ファイルサーバー対応の初期同期
     private async Task PerformInitialSyncAsync()
     {
-        _logger.LogInformation("--- 初期同期を開始します (大規模対応モード) ---");
-        
-        // 設定の再読み込み
+        _logger.LogInformation("--- 初期同期を開始 ---");
         var currentPairs = _backupPairs.ToList();
-
-        // 並列処理の設定
-        // ネットワーク越しやUSBドライブは「待ち時間」が長いので、
-        // 同時実行数を多め（CPUコア数 × 4倍〜8倍）に設定してスループットを上げます。
-        var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount * 8 };
+        var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount * 2 };
 
         foreach (var pair in currentPairs)
         {
             try
             {
-                if (!Directory.Exists(pair.Source))
-                {
-                    _logger.LogError("ソースが見つかりません: {path}", pair.Source);
-                    continue;
-                }
-
+                if (!Directory.Exists(pair.Source)) continue;
                 string latestRoot = Path.Combine(pair.Destination, "Latest");
                 if (!Directory.Exists(latestRoot)) Directory.CreateDirectory(latestRoot);
 
-                _logger.LogInformation("同期開始: {src} -> {dest}", pair.Source, latestRoot);
+                // 1. フォルダ構成の同期
+                foreach (var dirPath in Directory.GetDirectories(pair.Source, "*", SearchOption.AllDirectories))
+                {
+                    if (IsExcluded(dirPath)) continue;
+                    string relative = Path.GetRelativePath(pair.Source, dirPath);
+                    string destDir = Path.Combine(latestRoot, relative);
+                    if (!Directory.Exists(destDir)) Directory.CreateDirectory(destDir);
+                }
 
-                // ---------------------------------------------------------
-                // 1. 【コピー & 更新フェーズ】 ソースにあるものをバックアップへ
-                // GetFiles ではなく EnumerateFiles を使い、メモリを節約しながら即時実行
-                // ---------------------------------------------------------
-                
-                // ファイルの列挙（再帰的）
-                var sourceFileEnum = Directory.EnumerateFiles(pair.Source, "*", SearchOption.AllDirectories);
-
-                await Parallel.ForEachAsync(sourceFileEnum, parallelOptions, async (filePath, token) =>
+                // 2. ファイルの同期（コピー）
+                var sourceFiles = Directory.EnumerateFiles(pair.Source, "*", SearchOption.AllDirectories);
+                await Parallel.ForEachAsync(sourceFiles, parallelOptions, async (filePath, token) =>
                 {
                     if (IsExcluded(filePath)) return;
+                    string relative = Path.GetRelativePath(pair.Source, filePath);
+                    string mirrorPath = Path.Combine(latestRoot, relative);
 
-                    try
+                    bool needCopy = !File.Exists(mirrorPath);
+                    if (!needCopy)
                     {
-                        string relativePath = Path.GetRelativePath(pair.Source, filePath);
-                        string mirrorPath = Path.Combine(latestRoot, relativePath);
-
-                        bool needCopy = !File.Exists(mirrorPath);
-                        
-                        // 整合性チェック: 存在していても「サイズ」か「日付」が違えば更新とみなす
-                        if (!needCopy)
-                        {
-                            var si = new FileInfo(filePath);
-                            var di = new FileInfo(mirrorPath);
-                            
-                            // サーバーとローカルで時刻の精度が違うことがあるので、
-                            // 2秒以上の差がある場合のみ「新しい」と判定するのがコツです
-                            if (si.Length != di.Length || si.LastWriteTime > di.LastWriteTime.AddSeconds(2))
-                            {
-                                needCopy = true;
-                            }
-                        }
-
-                        if (needCopy)
-                        {
-                            string? d = Path.GetDirectoryName(mirrorPath);
-                            if (d != null && !Directory.Exists(d)) Directory.CreateDirectory(d);
-                            
-                            await CopyFileWithRetryAsync(filePath, mirrorPath);
-                            // 数が多いので、コピーした時だけログを出す（全部出すとログが溢れる）
-                            _logger.LogInformation("[更新] {path}", relativePath);
-                        }
+                        var si = new FileInfo(filePath);
+                        var di = new FileInfo(mirrorPath);
+                        if (si.Length != di.Length || si.LastWriteTime > di.LastWriteTime) needCopy = true;
                     }
-                    catch (Exception ex)
+
+                    if (needCopy)
                     {
-                        // 個別のファイルエラー（アクセス権限など）で全体を止めない
-                        _logger.LogWarning("ファイル処理スキップ: {file} ({msg})", filePath, ex.Message);
+                        string? d = Path.GetDirectoryName(mirrorPath);
+                        if (d != null && !Directory.Exists(d)) Directory.CreateDirectory(d);
+                        await CopyFileWithRetryAsync(filePath, mirrorPath);
+                        _logger.LogInformation("[初期同期] コピー: {path}", relative);
                     }
                 });
 
-                // ---------------------------------------------------------
-                // 2. 【削除フェーズ】 ソースにないものをゴミ箱へ
-                // ここも EnumerateFiles でバックアップ先を走査し、ソースに存在確認しに行く
-                // ---------------------------------------------------------
-                
-                _logger.LogInformation("不要ファイルの削除チェックを開始...");
-
-                var mirrorFileEnum = Directory.EnumerateFiles(latestRoot, "*", SearchOption.AllDirectories);
-
-                await Parallel.ForEachAsync(mirrorFileEnum, parallelOptions, async (mirrorPath, token) =>
+                // 3. 削除されたファイルの反映（ゴミ箱へ）
+                var mirrorFiles = Directory.GetFiles(latestRoot, "*", SearchOption.AllDirectories);
+                foreach (var mirrorPath in mirrorFiles)
                 {
-                    try 
-                    {
-                        string relativePath = Path.GetRelativePath(latestRoot, mirrorPath);
-                        string originalSourcePath = Path.Combine(pair.Source, relativePath);
+                    string relative = Path.GetRelativePath(latestRoot, mirrorPath);
+                    string originalSource = Path.Combine(pair.Source, relative);
 
-                        // ソース側にファイルが存在しなければ、それは「削除されたファイル」
-                        if (!File.Exists(originalSourcePath))
-                        {
-                            MoveToTrash(pair.Destination, mirrorPath, relativePath);
-                        }
-                    }
-                    catch (Exception ex)
+                    if (!File.Exists(originalSource))
                     {
-                        _logger.LogWarning("削除チェック失敗: {file} ({msg})", mirrorPath, ex.Message);
+                        MoveToTrash(pair.Destination, mirrorPath, relative);
                     }
-                });
-
-                // 空フォルダの掃除
+                }
                 DeleteEmptyDirectories(latestRoot);
-
             }
             catch (Exception ex)
             {
-                _logger.LogError("初期同期エラー ({src}): {msg}", pair.Source, ex.Message);
+                _logger.LogError("初期同期失敗 ({src}): {msg}", pair.Source, ex.Message);
             }
         }
-        _logger.LogInformation("--- 初期同期が完了しました ---");
+        _logger.LogInformation("--- 初期同期完了 ---");
     }
 
     // --- イベント処理とバックアップ実行 ---
