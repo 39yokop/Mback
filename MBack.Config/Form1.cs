@@ -109,21 +109,32 @@ public partial class Form1 : Form
         this.Controls.Add(_bottomPanel); // 下にパネル
     }
 
-    // --- 設定ファイルの探索ロジック ---
+// 設定ファイル(appsettings.json)を探すロジック（決定版）
     private void FindSettingsFile()
     {
+        // 1. 自分が今いる場所（exeがある場所）
         string baseDir = AppContext.BaseDirectory;
+        
+        // 2. まず「インストール済み環境（同じ場所にServiceがいる）」かチェック
+        string flatPath = Path.Combine(baseDir, "MBack.Service.exe");
+        if (File.Exists(flatPath))
+        {
+            // 同じ場所にサービス本体がいるなら、設定ファイルもそこにあります
+            // ★重要: 必ず「フルパス（絶対パス）」にします
+            _jsonPath = Path.Combine(baseDir, "appsettings.json");
+            return;
+        }
+
+        // 3. 開発環境（親フォルダを遡るパターン）
         DirectoryInfo? dir = new DirectoryInfo(baseDir);
         string servicePathCandidate = "";
 
-        // 親フォルダを遡って MBack.Service を探す
         while (dir != null)
         {
             var sibling = dir.GetDirectories("MBack.Service").FirstOrDefault();
             if (sibling != null)
             {
                  string tryPath = Path.Combine(sibling.FullName, "appsettings.json");
-                 // フォルダがあれば、ファイルがなくてもそこを正解とする（これから作るため）
                  servicePathCandidate = tryPath; 
                  break;
             }
@@ -136,11 +147,10 @@ public partial class Form1 : Form
         }
         else
         {
-            // 見つからなければ自分の直下（カレント）を使う
-            _jsonPath = "appsettings.json";
+            // 見つからなければ自分の直下を使う（ここも絶対パスにする！）
+            _jsonPath = Path.Combine(baseDir, "appsettings.json");
         }
     }
-
     // --- 設定読み込み ---
     private void LoadSettings()
     {
