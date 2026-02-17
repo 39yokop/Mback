@@ -1,9 +1,10 @@
 namespace MBack.Config;
 
-public class AppSettingsRaw
+public class AppSettings
 {
     public List<BackupPair> BackupSettings { get; set; } = new();
     public List<string> GlobalExclusions { get; set; } = new();
+    public int LogRetentionDays { get; set; } = 30;
     // ★追加: ログの保存期間 (デフォルト30日)
     public int LogRetentionDays { get; set; } = 30;
 }

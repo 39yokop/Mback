@@ -146,10 +146,9 @@ namespace MBack.Config
                     int x = (int)(key.GetValue("X") ?? 100);
                     int y = (int)(key.GetValue("Y") ?? 100);
 
-                    // Screen.PrimaryScreen の後ろに「?」を入れ、?? で予備のサイズ（例: 800x600）を指定します
                     if (x < 0 || y < 0 ||
-                        x > (Screen.PrimaryScreen?.Bounds.Width ?? 800) ||
-                        y > (Screen.PrimaryScreen?.Bounds.Height ?? 600))
+                        x > Screen.PrimaryScreen.Bounds.Width ||
+                        y > Screen.PrimaryScreen.Bounds.Height)
                     {
                         x = 100; y = 100;
                     }

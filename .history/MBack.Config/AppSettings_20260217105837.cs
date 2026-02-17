@@ -1,6 +1,6 @@
 namespace MBack.Config;
 
-public class AppSettingsRaw
+public class AppSettings
 {
     public List<BackupPair> BackupSettings { get; set; } = new();
     public List<string> GlobalExclusions { get; set; } = new();
