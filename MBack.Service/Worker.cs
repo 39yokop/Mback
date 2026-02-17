@@ -12,7 +12,7 @@ public class Worker : BackgroundService
     private readonly IConfiguration _configuration;
     private readonly BlockingCollection<FileSystemEventArgs> _eventQueue = new();
     private readonly ConcurrentDictionary<string, CancellationTokenSource> _debounceTokens = new();
-
+    private HistoryLogger? _history;
     private List<BackupPair> _backupPairs = new();
     private List<string> _globalExclusions = new();
     private readonly List<FileSystemWatcher> _activeWatchers = new();
@@ -38,6 +38,13 @@ public class Worker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        // ★初期化と掃除
+        int days = _configuration.GetValue<int>("LogRetentionDays");
+        if (days == 0) days = 30; // 設定がない場合のデフォルト
+        
+        _history = new HistoryLogger(days);
+        _history.CleanUpOldLogs(); // 起動時に古いログを消す
+
         ReloadAndRestartWatchers();
         StartConfigWatcher();
         StartTriggerWatcher(); // 手動実行ボタンの監視
@@ -53,7 +60,7 @@ public class Worker : BackgroundService
     }
 
     // --- 設定読み込みと初期化 ---
-private void ReloadAndRestartWatchers()
+    private void ReloadAndRestartWatchers()
     {
         _logger.LogInformation("設定を読み込み、監視体制を更新します...");
         
@@ -77,7 +84,6 @@ private void ReloadAndRestartWatchers()
         // 監視のセットアップ
         foreach (var pair in _backupPairs)
         {
-            // ★修正: ここに try-catch を入れて、1つのペアがダメでも他を動かす
             try
             {
                 // ドライブ自体がない場合などに備える
@@ -103,14 +109,12 @@ private void ReloadAndRestartWatchers()
             }
             catch (Exception ex)
             {
-                // ★失敗してもログを出して、次のペアの設定に進む（アプリを落とさない）
                 _logger.LogError("監視セットアップ失敗 (スキップします): {src} -> {dest}\n理由: {msg}", pair.Source, pair.Destination, ex.Message);
             }
         }
     }
 
     // --- 初期同期 (完全版: 削除・作成・コピー) ---
-    // ★修正版: 大規模ファイルサーバー対応の初期同期
     private async Task PerformInitialSyncAsync()
     {
         _logger.LogInformation("--- 初期同期を開始します (大規模対応モード) ---");
@@ -119,8 +123,6 @@ private void ReloadAndRestartWatchers()
         var currentPairs = _backupPairs.ToList();
 
         // 並列処理の設定
-        // ネットワーク越しやUSBドライブは「待ち時間」が長いので、
-        // 同時実行数を多め（CPUコア数 × 4倍〜8倍）に設定してスループットを上げます。
         var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount * 8 };
 
         foreach (var pair in currentPairs)
@@ -138,12 +140,7 @@ private void ReloadAndRestartWatchers()
 
                 _logger.LogInformation("同期開始: {src} -> {dest}", pair.Source, latestRoot);
 
-                // ---------------------------------------------------------
-                // 1. 【コピー & 更新フェーズ】 ソースにあるものをバックアップへ
-                // GetFiles ではなく EnumerateFiles を使い、メモリを節約しながら即時実行
-                // ---------------------------------------------------------
-                
-                // ファイルの列挙（再帰的）
+                // 1. 【コピー & 更新フェーズ】
                 var sourceFileEnum = Directory.EnumerateFiles(pair.Source, "*", SearchOption.AllDirectories);
 
                 await Parallel.ForEachAsync(sourceFileEnum, parallelOptions, async (filePath, token) =>
@@ -157,14 +154,11 @@ private void ReloadAndRestartWatchers()
 
                         bool needCopy = !File.Exists(mirrorPath);
                         
-                        // 整合性チェック: 存在していても「サイズ」か「日付」が違えば更新とみなす
+                        // 整合性チェック
                         if (!needCopy)
                         {
                             var si = new FileInfo(filePath);
                             var di = new FileInfo(mirrorPath);
-                            
-                            // サーバーとローカルで時刻の精度が違うことがあるので、
-                            // 2秒以上の差がある場合のみ「新しい」と判定するのがコツです
                             if (si.Length != di.Length || si.LastWriteTime > di.LastWriteTime.AddSeconds(2))
                             {
                                 needCopy = true;
@@ -177,22 +171,23 @@ private void ReloadAndRestartWatchers()
                             if (d != null && !Directory.Exists(d)) Directory.CreateDirectory(d);
                             
                             await CopyFileWithRetryAsync(filePath, mirrorPath);
-                            // 数が多いので、コピーした時だけログを出す（全部出すとログが溢れる）
+
+                            // ★追加: コピー履歴ログ
+                            var fi = new FileInfo(filePath);
+                            _history?.Log("Copy", filePath, "", fi.Length);
+                            
                             _logger.LogInformation("[更新] {path}", relativePath);
                         }
                     }
                     catch (Exception ex)
                     {
-                        // 個別のファイルエラー（アクセス権限など）で全体を止めない
+                        // ★追加: エラーログ
+                        _history?.Log("Error", filePath, ex.Message);
                         _logger.LogWarning("ファイル処理スキップ: {file} ({msg})", filePath, ex.Message);
                     }
                 });
 
-                // ---------------------------------------------------------
-                // 2. 【削除フェーズ】 ソースにないものをゴミ箱へ
-                // ここも EnumerateFiles でバックアップ先を走査し、ソースに存在確認しに行く
-                // ---------------------------------------------------------
-                
+                // 2. 【削除フェーズ】
                 _logger.LogInformation("不要ファイルの削除チェックを開始...");
 
                 var mirrorFileEnum = Directory.EnumerateFiles(latestRoot, "*", SearchOption.AllDirectories);
@@ -204,9 +199,9 @@ private void ReloadAndRestartWatchers()
                         string relativePath = Path.GetRelativePath(latestRoot, mirrorPath);
                         string originalSourcePath = Path.Combine(pair.Source, relativePath);
 
-                        // ソース側にファイルが存在しなければ、それは「削除されたファイル」
                         if (!File.Exists(originalSourcePath))
                         {
+                            // 削除処理（ログ出力は MoveToTrash 内で行う）
                             MoveToTrash(pair.Destination, mirrorPath, relativePath);
                         }
                     }
@@ -216,12 +211,12 @@ private void ReloadAndRestartWatchers()
                     }
                 });
 
-                // 空フォルダの掃除
                 DeleteEmptyDirectories(latestRoot);
 
             }
             catch (Exception ex)
             {
+                _history?.Log("Error", pair.Source, "初期同期全体エラー: " + ex.Message);
                 _logger.LogError("初期同期エラー ({src}): {msg}", pair.Source, ex.Message);
             }
         }
@@ -288,16 +283,27 @@ private void ReloadAndRestartWatchers()
 
                 await CopyFileWithRetryAsync(e.FullPath, mirrorPath);
 
-                // 履歴作成
+                // ★追加: リアルタイムコピー履歴ログ
+                var fi = new FileInfo(e.FullPath);
+                _history?.Log("Copy", e.FullPath, "", fi.Length);
+
+                // 履歴作成 (簡易バージョニング)
+                /* ※注: もしバージョニングが不要ならこのブロックは削除してもOKですが、
+                   コードに残っていたのでそのまま活かしています。
+                */
                 string histDir = Path.Combine(pair.Destination, "History", Path.GetDirectoryName(relative) ?? "");
                 if (!Directory.Exists(histDir)) Directory.CreateDirectory(histDir);
-                File.Copy(mirrorPath, Path.Combine(histDir, $"{DateTime.Now:yyyyMMdd_HHmmss}_{Path.GetFileName(e.Name)}"), true);
-                
+                try {
+                    File.Copy(mirrorPath, Path.Combine(histDir, $"{DateTime.Now:yyyyMMdd_HHmmss}_{Path.GetFileName(e.Name)}"), true);
+                } catch { /* 履歴作成の失敗は無視 */ }
+
                 _logger.LogInformation("[リアルタイム同期] {file}", relative);
             }
         }
         catch (Exception ex)
         {
+            // ★追加: エラーログ
+            _history?.Log("Error", e.FullPath, ex.Message);
             _logger.LogError("バックアップ失敗: {msg}", ex.Message);
         }
     }
@@ -315,15 +321,24 @@ private void ReloadAndRestartWatchers()
             if (File.Exists(fullPath))
             {
                 File.Move(fullPath, trashPath);
+                
+                // ★追加: 削除履歴ログ
+                _history?.Log("Delete", fullPath);
+                
                 _logger.LogInformation("[ゴミ箱] 移動: {name}", safeName);
             }
         }
-        catch {}
+        catch (Exception ex)
+        {
+            // 削除失敗時もエラーログに残す
+            _history?.Log("Error", fullPath, "削除失敗: " + ex.Message);
+        }
     }
 
     private bool IsExcluded(string path)
     {
         string name = Path.GetFileName(path);
+        // ~$ で始まるファイル(Office一時ファイル)などを除外
         if (name.StartsWith("~$") || name.Equals("System Volume Information", StringComparison.OrdinalIgnoreCase)) return true;
         foreach (var pat in _globalExclusions)
         {

@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MBack.Service")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a7519b6bce03c936b36c05753cb51cc89057f509")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+57a8fdafcb7e2be43a145193d0656da782b02ee1")]
 [assembly: System.Reflection.AssemblyProductAttribute("MBack.Service")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MBack.Service")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

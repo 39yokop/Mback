@@ -1,0 +1,30 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            // これを選ぶと「サービス（裏方）」をVSCode上で動かせます
+            "name": ".NET Core Launch (Service)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            // プログラムのパスが合っているか確認してください
+            "program": "${workspaceFolder}/MBack.Service/bin/Debug/net10.0/MBack.Service.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}/MBack.Service",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
+            // これを選ぶと「設定画面（表方）」をVSCode上で動かせます
+            "name": ".NET Core Launch (Config)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/MBack.Config/bin/Debug/net8.0-windows/MBack.Config.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}/MBack.Config",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        }
+    ]
+}

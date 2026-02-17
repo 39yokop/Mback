@@ -1,336 +1,404 @@
+using System;
 using System.Text.Json;
 using System.Diagnostics;
-using System.ServiceProcess; // サービス操作用
-using System.Drawing; // 色やフォント用
+using System.ComponentModel;
 using System.Windows.Forms;
+using System.Drawing;
 
-namespace MBack.Config;
-
-public partial class Form1 : Form
+namespace MBack.Config
 {
-    // --- UI部品の定義 ---
-    private DataGridView _grid = new();
-    private FlowLayoutPanel _bottomPanel = new(); // ボタンを並べるパネル
-
-    private Button _btnAdd = new();
-    private Button _btnRemove = new();
-    private Button _btnExclusions = new();
-    private Button _btnRunNow = new();
-    private Button _btnStopService = new(); // ★サービス停止ボタン
-    private Button _btnViewLog = new();
-    private Button _btnSave = new();
-
-    // --- データ関連 ---
-    private string _jsonPath = "";
-    private AppSettings _currentSettings = new();
-    private const string ServiceName = "MBackService"; // Windowsサービス名
-
-    public Form1()
+    // 設定保存用クラス (appsettings.json用)
+    public class AppSettingsRaw
     {
-        InitializeComponent();
-        
-        // 設定ファイル(appsettings.json)を探す
-        FindSettingsFile(); 
-        
-        // 画面を作る
-        SetupLayout();
-        
-        // ファイルから読み込む
-        LoadSettings();
+        public List<BackupPair> BackupSettings { get; set; } = new();
+        public List<string> GlobalExclusions { get; set; } = new();
+        public int LogRetentionDays { get; set; } = 30;
     }
 
-    // --- 画面レイアウトの構築 ---
-    private void SetupLayout()
+    public class BackupPair
     {
-        this.Text = "MBack 設定ツール";
-        this.Size = new Size(850, 500); // 少し横長に
-
-        // 1. ボタンパネルの設定
-        _bottomPanel.Dock = DockStyle.Bottom;
-        _bottomPanel.Height = 50;
-        _bottomPanel.FlowDirection = FlowDirection.LeftToRight;
-        _bottomPanel.Padding = new Padding(5);
-
-        // 2. 各ボタンの設定
-        _btnAdd.Text = "追加 (+)";
-        _btnAdd.AutoSize = true;
-        _btnAdd.Click += OnAddClick;
-
-        _btnRemove.Text = "削除 (-)";
-        _btnRemove.AutoSize = true;
-        _btnRemove.Click += OnRemoveClick;
-
-        _btnExclusions.Text = "除外設定...";
-        _btnExclusions.AutoSize = true;
-        _btnExclusions.Click += OnExclusionsClick;
-
-        _btnRunNow.Text = "今すぐバックアップ";
-        _btnRunNow.AutoSize = true;
-        _btnRunNow.ForeColor = Color.DarkBlue;
-        _btnRunNow.Click += OnRunNowClick;
-
-        _btnStopService.Text = "サービス停止"; // ★追加
-        _btnStopService.AutoSize = true;
-        _btnStopService.ForeColor = Color.Red;
-        _btnStopService.Click += OnStopServiceClick;
-
-        _btnViewLog.Text = "ログを見る";
-        _btnViewLog.AutoSize = true;
-        _btnViewLog.Click += OnViewLogClick;
-
-        _btnSave.Text = "保存して閉じる";
-        _btnSave.AutoSize = true;
-        _btnSave.Font = new Font(this.Font, FontStyle.Bold);
-        _btnSave.Click += OnSaveClick;
-
-        // 3. パネルにボタンを追加（★ここが見当たらなかった部分です）
-        // 順番に並べます
-        _bottomPanel.Controls.Add(_btnAdd);
-        _bottomPanel.Controls.Add(_btnRemove);
-        _bottomPanel.Controls.Add(_btnExclusions);
-        _bottomPanel.Controls.Add(_btnRunNow);
-        _bottomPanel.Controls.Add(_btnStopService); // ★追加
-        _bottomPanel.Controls.Add(_btnViewLog);
-        _bottomPanel.Controls.Add(_btnSave);
-
-        // 4. グリッド（一覧表）の設定
-        _grid.Dock = DockStyle.Fill;
-        _grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-        _grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-        _grid.ReadOnly = true;
-        _grid.AllowUserToAddRows = false;
-        _grid.MultiSelect = false;
-        
-        _grid.Columns.Add("Source", "監視元フォルダ");
-        _grid.Columns.Add("Dest", "バックアップ先");
-
-        // 5. フォームに追加
-        this.Controls.Add(_grid);       // 上いっぱい
-        this.Controls.Add(_bottomPanel); // 下にパネル
+        public string Source { get; set; } = "";
+        public string Destination { get; set; } = "";
     }
 
-// 設定ファイル(appsettings.json)を探すロジック（決定版）
-    private void FindSettingsFile()
+    public partial class Form1 : Form
     {
-        // 1. 自分が今いる場所（exeがある場所）
-        string baseDir = AppContext.BaseDirectory;
-        
-        // 2. まず「インストール済み環境（同じ場所にServiceがいる）」かチェック
-        string flatPath = Path.Combine(baseDir, "MBack.Service.exe");
-        if (File.Exists(flatPath))
+        // UI部品
+        private DataGridView _grid = new();
+        private Button _btnAdd = new();
+        private Button _btnEdit = new();
+        private Button _btnDelete = new();
+        private Button _btnSave = new();
+        private Button _btnLog = new();
+        private Button _btnExclusion = new(); // 除外設定ボタン
+        private Button _btnService = new();   // サービス操作ボタン
+        private FlowLayoutPanel _buttonPanel = new(); // ボタンを並べるパネル(自動折り返し)
+        private SplitContainer _splitContainer = new(); // 上下分割用
+
+        // データ
+        private List<BackupPair> _backupList = new();
+        private List<string> _globalExclusions = new();
+        private int _logRetentionDays = 30;
+
+        // 設定ファイルパス
+        private string _jsonPath;
+
+        public Form1()
         {
-            // 同じ場所にサービス本体がいるなら、設定ファイルもそこにあります
-            // ★重要: 必ず「フルパス（絶対パス）」にします
-            _jsonPath = Path.Combine(baseDir, "appsettings.json");
-            return;
+            this.Text = "MBack 設定ツール";
+            this.Size = new Size(800, 500);
+            this.StartPosition = FormStartPosition.Manual;
+
+            _jsonPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appsettings.json");
+
+            SetupLayout();
+            LoadSettings();
+            UpdateGrid();
+            LoadWindowState(); // ★ウィンドウサイズ復元
         }
 
-        // 3. 開発環境（親フォルダを遡るパターン）
-        DirectoryInfo? dir = new DirectoryInfo(baseDir);
-        string servicePathCandidate = "";
-
-        while (dir != null)
+        // --- レイアウト構築 ---
+        private void SetupLayout()
         {
-            var sibling = dir.GetDirectories("MBack.Service").FirstOrDefault();
-            if (sibling != null)
+            _splitContainer.Dock = DockStyle.Fill;
+            _splitContainer.Orientation = Orientation.Horizontal;
+            _splitContainer.FixedPanel = FixedPanel.Panel2;
+            _splitContainer.SplitterDistance = 400;
+            _splitContainer.IsSplitterFixed = true;
+
+            // グリッド
+            _grid.Dock = DockStyle.Fill;
+            _grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            _grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            _grid.MultiSelect = false;
+            _grid.ReadOnly = true;
+            _grid.AllowUserToAddRows = false;
+            _grid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            _grid.Columns.Add("Source", "監視元フォルダ");
+            _grid.Columns.Add("Dest", "バックアップ先");
+
+            _splitContainer.Panel1.Controls.Add(_grid);
+
+            // ボタンパネル
+            _buttonPanel.Dock = DockStyle.Fill;
+            _buttonPanel.FlowDirection = FlowDirection.LeftToRight;
+            _buttonPanel.WrapContents = true;
+            _buttonPanel.Padding = new Padding(10);
+            _buttonPanel.AutoSize = true;
+            _buttonPanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+
+            // ボタン設定
+            InitButton(_btnAdd, "追加", OnAddClick);
+            InitButton(_btnEdit, "編集", OnEditClick);
+            InitButton(_btnDelete, "削除", OnDeleteClick);
+            InitButton(_btnExclusion, "除外設定", OnExclusionClick);
+            InitButton(_btnLog, "ログを見る & 復元", OnLogClick, 140);
+            InitButton(_btnService, "サービス管理", OnServiceClick, 140);
+
+            _btnSave.Text = "保存して閉じる";
+            _btnSave.Width = 140;
+            _btnSave.Height = 30;
+            _btnSave.Font = new Font(this.Font, FontStyle.Bold);
+            _btnSave.Click += OnSaveClick;
+
+            _buttonPanel.Controls.AddRange(new Control[]
             {
-                 string tryPath = Path.Combine(sibling.FullName, "appsettings.json");
-                 servicePathCandidate = tryPath; 
-                 break;
-            }
-            dir = dir.Parent;
+                _btnAdd, _btnEdit, _btnDelete, _btnExclusion, _btnLog, _btnService, _btnSave
+            });
+
+            _buttonPanel.SizeChanged += (s, e) => AdjustBottomPanelHeight();
+            _splitContainer.Panel2.Controls.Add(_buttonPanel);
+
+            this.Controls.Add(_splitContainer);
+
+            // サービス状態更新タイマー
+            var timer = new System.Windows.Forms.Timer();
+            timer.Interval = 2000;
+            timer.Tick += (s, e) => UpdateServiceButtonState();
+            timer.Start();
+            UpdateServiceButtonState();
         }
 
-        if (!string.IsNullOrEmpty(servicePathCandidate))
+        private void InitButton(Button btn, string text, EventHandler handler, int width = 100)
         {
-            _jsonPath = servicePathCandidate;
+            btn.Text = text;
+            btn.Width = width;
+            btn.Height = 30;
+            btn.Click += handler;
         }
-        else
-        {
-            // 見つからなければ自分の直下を使う（ここも絶対パスにする！）
-            _jsonPath = Path.Combine(baseDir, "appsettings.json");
-        }
-    }
-    // --- 設定読み込み ---
-    private void LoadSettings()
-    {
-        if (!File.Exists(_jsonPath)) return;
-        try
-        {
-            string json = File.ReadAllText(_jsonPath);
-            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            _currentSettings = JsonSerializer.Deserialize<AppSettings>(json, options) ?? new AppSettings();
-            RefreshGrid();
-        }
-        catch (Exception ex) { MessageBox.Show("読み込みエラー: " + ex.Message); }
-    }
 
-    private void RefreshGrid()
-    {
-        _grid.Rows.Clear();
-        if (_currentSettings.BackupSettings != null)
+        // --- ボタンエリア高さ調整 ---
+        private void AdjustBottomPanelHeight()
         {
-            foreach (var pair in _currentSettings.BackupSettings)
+            int preferredHeight = _buttonPanel.PreferredSize.Height;
+            int newDistance = this.ClientSize.Height - preferredHeight;
+
+            if (newDistance > 50)
             {
-                _grid.Rows.Add(pair.Source, pair.Destination);
+                try { _splitContainer.SplitterDistance = newDistance; }
+                catch { }
             }
         }
-    }
 
-    // --- イベントハンドラ ---
-
-    // 1. 追加ボタン
-    private void OnAddClick(object? s, EventArgs e)
-    {
-        using var d1 = new FolderBrowserDialog { Description = "監視元を選択" };
-        if (d1.ShowDialog() != DialogResult.OK) return;
-        
-        using var d2 = new FolderBrowserDialog { Description = "バックアップ先を選択" };
-        if (d2.ShowDialog() != DialogResult.OK) return;
-
-        _currentSettings.BackupSettings.Add(new BackupPair { Source = d1.SelectedPath, Destination = d2.SelectedPath });
-        RefreshGrid();
-    }
-
-    // 2. 削除ボタン
-    private void OnRemoveClick(object? s, EventArgs e)
-    {
-        if (_grid.SelectedRows.Count > 0)
+        protected override void OnResize(EventArgs e)
         {
-            int idx = _grid.SelectedRows[0].Index;
-            _currentSettings.BackupSettings.RemoveAt(idx);
-            RefreshGrid();
+            base.OnResize(e);
+            AdjustBottomPanelHeight();
         }
-    }
 
-    // 3. 除外設定ボタン
-    private void OnExclusionsClick(object? s, EventArgs e)
-    {
-        using var form = new ExclusionForm(_currentSettings.GlobalExclusions);
-        if (form.ShowDialog() == DialogResult.OK)
+        // --- ウィンドウ位置・サイズ保存 ---
+        private void LoadWindowState()
         {
-            _currentSettings.GlobalExclusions = form.Exclusions;
-        }
-    }
-
-    // 4. 今すぐ実行ボタン
-    private void OnRunNowClick(object? s, EventArgs e)
-    {
-        try
-        {
-            string? dir = Path.GetDirectoryName(_jsonPath);
-            if (string.IsNullOrEmpty(dir)) return;
-            
-            // backup.trigger ファイルを作成
-            File.WriteAllText(Path.Combine(dir, "backup.trigger"), DateTime.Now.ToString());
-            MessageBox.Show("実行命令を送りました！\nログを確認してください。");
-        }
-        catch (Exception ex) { MessageBox.Show("エラー: " + ex.Message); }
-    }
-
-    // 5. ★サービス停止ボタン
-    private void OnStopServiceClick(object? sender, EventArgs e)
-    {
-        ControlService("Stop");
-    }
-
-    // 6. ログを見るボタン (AppData対応版)
-    private void OnViewLogClick(object? s, EventArgs e)
-    {
-        try
-        {
-            // AppData/Local/MBack/Logs を見る
-            string logFolder = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), 
-                "MBack", 
-                "Logs");
-
-            string logFileName = $"log-{DateTime.Now:yyyyMMdd}.txt";
-            string logPath = Path.Combine(logFolder, logFileName);
-
-            if (!File.Exists(logPath))
+            try
             {
-                MessageBox.Show($"今日のログがまだありません。\n場所: {logPath}", "ログなし");
-                return;
-            }
-
-            var viewer = new LogViewerForm(logPath);
-            viewer.ShowDialog();
-        }
-        catch (Exception ex) { MessageBox.Show("エラー: " + ex.Message); }
-    }
-
-    // 7. 保存して閉じるボタン
-    private void OnSaveClick(object? s, EventArgs e)
-    {
-        try
-        {
-            // JSON保存
-            var options = new JsonSerializerOptions { WriteIndented = true };
-            string json = JsonSerializer.Serialize(_currentSettings, options);
-
-            string? dir = Path.GetDirectoryName(_jsonPath);
-            if(dir != null && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
-
-            File.WriteAllText(_jsonPath, json);
-
-            // ★サービス再開（またはリロード通知）
-            ControlService("Start");
-
-            MessageBox.Show("設定を保存しました。", "完了");
-            this.Close();
-        }
-        catch (Exception ex) { MessageBox.Show("保存エラー: " + ex.Message); }
-    }
-
-    // --- ヘルパーメソッド: サービスの操作 ---
-    private void ControlService(string action)
-    {
-        // 開発中(dotnet run)の場合は動かないので無視する
-        // ただし、本番で使うときは管理者権限が必要
-        try
-        {
-            using var sc = new ServiceController(ServiceName);
-            
-            // サービスが存在するかチェック（例外が出たらサービスがない）
-            try { var status = sc.Status; }
-            catch 
-            {
-                // 開発中はここで抜ける
-                // MessageBox.Show("サービスが見つかりません(開発モード)"); 
-                return; 
-            }
-
-            if (action == "Stop")
-            {
-                if (sc.Status == ServiceControllerStatus.Running)
+                using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\MBackConfig");
+                if (key != null)
                 {
-                    if (MessageBox.Show("バックアップサービスを停止しますか？", "確認", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                    int w = (int)(key.GetValue("Width") ?? 800);
+                    int h = (int)(key.GetValue("Height") ?? 500);
+                    int x = (int)(key.GetValue("X") ?? 100);
+                    int y = (int)(key.GetValue("Y") ?? 100);
+
+                    if (x < 0 || y < 0 ||
+                        x > Screen.PrimaryScreen.Bounds.Width ||
+                        y > Screen.PrimaryScreen.Bounds.Height)
+                    {
+                        x = 100; y = 100;
+                    }
+
+                    this.Size = new Size(w, h);
+                    this.Location = new Point(x, y);
+                }
+            }
+            catch { }
+        }
+
+        private void SaveWindowState()
+        {
+            try
+            {
+                if (this.WindowState == FormWindowState.Minimized) return;
+
+                using var key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(@"Software\MBackConfig");
+                if (key != null)
+                {
+                    if (this.WindowState == FormWindowState.Maximized)
+                    {
+                        key.SetValue("Width", this.RestoreBounds.Width);
+                        key.SetValue("Height", this.RestoreBounds.Height);
+                        key.SetValue("X", this.RestoreBounds.Location.X);
+                        key.SetValue("Y", this.RestoreBounds.Location.Y);
+                    }
+                    else
+                    {
+                        key.SetValue("Width", this.Width);
+                        key.SetValue("Height", this.Height);
+                        key.SetValue("X", this.Location.X);
+                        key.SetValue("Y", this.Location.Y);
+                    }
+                }
+            }
+            catch { }
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            SaveWindowState();
+            base.OnFormClosing(e);
+        }
+
+        // --- イベントハンドラ ---
+        private void OnAddClick(object? sender, EventArgs e)
+        {
+            string? src = SelectFolder("監視するフォルダを選んでください (NASも可)");
+            if (src == null) return;
+
+            string? dest = SelectFolder($"[{Path.GetFileName(src)}] のバックアップ先を選んでください");
+            if (dest == null) return;
+
+            _backupList.Add(new BackupPair { Source = src, Destination = dest });
+            UpdateGrid();
+        }
+
+        private string? SelectFolder(string title)
+        {
+            using var dlg = new FolderBrowserDialog();
+            dlg.Description = title;
+            dlg.UseDescriptionForTitle = true;
+            return dlg.ShowDialog() == DialogResult.OK ? dlg.SelectedPath : null;
+        }
+
+        private void OnEditClick(object? sender, EventArgs e)
+        {
+            if (_grid.SelectedRows.Count == 0) return;
+            int index = _grid.SelectedRows[0].Index;
+
+            var pair = _backupList[index];
+
+            var result = MessageBox.Show(
+                $"設定を編集しますか？\n一旦削除して追加し直す形になります。\n\n現在の設定:\n元: {pair.Source}",
+                "編集",
+                MessageBoxButtons.YesNo);
+
+            if (result == DialogResult.Yes)
+            {
+                _backupList.RemoveAt(index);
+                UpdateGrid();
+                OnAddClick(null, null);
+            }
+        }
+
+        private void OnDeleteClick(object? sender, EventArgs e)
+        {
+            if (_grid.SelectedRows.Count == 0) return;
+            int index = _grid.SelectedRows[0].Index;
+
+            var pair = _backupList[index];
+            var result = MessageBox.Show(
+                $"以下の設定を削除してもよろしいですか？\n(バックアップ済みのファイルは消えません)\n\n元: {pair.Source}\n先: {pair.Destination}",
+                "削除確認",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+
+            if (result == DialogResult.Yes)
+            {
+                _backupList.RemoveAt(index);
+                UpdateGrid();
+            }
+        }
+
+        private void OnExclusionClick(object? sender, EventArgs e)
+        {
+            using var form = new ExclusionForm(_globalExclusions);
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                _globalExclusions = form.Exclusions;
+            }
+        }
+
+        private void OnLogClick(object? sender, EventArgs e)
+        {
+            using var logForm = new LogViewerForm();
+            logForm.ShowDialog();
+        }
+
+        private void OnServiceClick(object? sender, EventArgs e)
+        {
+            string serviceName = "MBackService";
+
+            try
+            {
+                var sc = new System.ServiceProcess.ServiceController(serviceName);
+
+                if (sc.Status == System.ServiceProcess.ServiceControllerStatus.Running)
+                {
+                    if (MessageBox.Show("サービスを停止しますか？", "確認", MessageBoxButtons.YesNo) == DialogResult.Yes)
                     {
                         sc.Stop();
-                        sc.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(10));
-                        MessageBox.Show("サービスを停止しました。");
+                        sc.WaitForStatus(System.ServiceProcess.ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(10));
                     }
                 }
                 else
                 {
-                    MessageBox.Show("すでに停止しています。");
+                    if (MessageBox.Show("サービスを開始しますか？", "確認", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                    {
+                        sc.Start();
+                        sc.WaitForStatus(System.ServiceProcess.ServiceControllerStatus.Running, TimeSpan.FromSeconds(10));
+                    }
                 }
+
+                UpdateServiceButtonState();
             }
-            else if (action == "Start")
+            catch (Exception ex)
             {
-                // 停止中なら開始する
-                if (sc.Status == ServiceControllerStatus.Stopped)
-                {
-                    sc.Start();
-                    sc.WaitForStatus(ServiceControllerStatus.Running, TimeSpan.FromSeconds(10));
-                }
-                // 実行中なら何もしない（設定ファイル書き換えで勝手にリロードされるため）
+                MessageBox.Show("サービスの操作に失敗しました。\n(管理者として実行していない可能性があります)\n" + ex.Message);
             }
         }
-        catch (Exception ex)
+
+        private void UpdateServiceButtonState()
         {
-            MessageBox.Show($"サービスの操作に失敗しました。\n管理者権限で実行していますか？\n\n{ex.Message}", "エラー");
+            try
+            {
+                using var sc = new System.ServiceProcess.ServiceController("MBackService");
+
+                if (sc.Status == System.ServiceProcess.ServiceControllerStatus.Running)
+                {
+                    _btnService.Text = "サービス: 実行中 (停止)";
+                    _btnService.BackColor = Color.LightGreen;
+                }
+                else
+                {
+                    _btnService.Text = "サービス: 停止中 (開始)";
+                    _btnService.BackColor = Color.LightPink;
+                }
+            }
+            catch
+            {
+                _btnService.Text = "サービス: 不明";
+                _btnService.BackColor = Color.LightGray;
+            }
+        }
+
+        private void OnSaveClick(object? sender, EventArgs e)
+        {
+            SaveSettings();
+            SaveWindowState();
+            this.Close();
+        }
+
+        // --- 設定読み書き ---
+        private void LoadSettings()
+        {
+            if (!File.Exists(_jsonPath)) return;
+
+            try
+            {
+                var json = File.ReadAllText(_jsonPath);
+                var settings = JsonSerializer.Deserialize<AppSettingsRaw>(json);
+
+                if (settings != null)
+                {
+                    _backupList = settings.BackupSettings ?? new();
+                    _globalExclusions = settings.GlobalExclusions ?? new();
+                    _logRetentionDays = settings.LogRetentionDays;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("設定の読み込みに失敗しました: " + ex.Message);
+            }
+        }
+
+        private void SaveSettings()
+        {
+            try
+            {
+                var settings = new AppSettingsRaw
+                {
+                    BackupSettings = _backupList,
+                    GlobalExclusions = _globalExclusions,
+                    LogRetentionDays = _logRetentionDays
+                };
+
+                var options = new JsonSerializerOptions { WriteIndented = true };
+                var json = JsonSerializer.Serialize(settings, options);
+                File.WriteAllText(_jsonPath, json);
+
+                MessageBox.Show("設定を保存しました。\nサービスが自動的に新しい設定を読み込みます。");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("保存に失敗しました: " + ex.Message);
+            }
+        }
+
+        private void UpdateGrid()
+        {
+            _grid.Rows.Clear();
+            foreach (var pair in _backupList)
+            {
+                _grid.Rows.Add(pair.Source, pair.Destination);
+            }
         }
     }
 }
