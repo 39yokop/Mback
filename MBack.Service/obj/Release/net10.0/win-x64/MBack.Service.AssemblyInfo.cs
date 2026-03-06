@@ -13,11 +13,11 @@ using System.Reflection;
 [assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsIdAttribute("dotnet-MBack.Service-cee70bc9-6a34-4b18-b495-f54151befebd")]
 [assembly: System.Reflection.AssemblyCompanyAttribute("MBack.Service")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
-[assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+57a8fdafcb7e2be43a145193d0656da782b02ee1")]
+[assembly: System.Reflection.AssemblyFileVersionAttribute("2.0.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("2.0.0+65a62806a0e167c627601d82ccf875b125b554af")]
 [assembly: System.Reflection.AssemblyProductAttribute("MBack.Service")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MBack.Service")]
-[assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
+[assembly: System.Reflection.AssemblyVersionAttribute("2.0.0.0")]
 
 // MSBuild WriteCodeFragment クラスによって生成されました。
 

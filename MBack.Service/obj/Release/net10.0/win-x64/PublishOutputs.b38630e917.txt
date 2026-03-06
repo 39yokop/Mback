@@ -1,4 +1,5 @@
 C:\MBackRelease\appsettings.Development.json
 C:\MBackRelease\appsettings.json
 C:\MBackRelease\MBack.Service.pdb
+C:\MBackRelease\e_sqlite3.dll
 C:\MBackRelease\MBack.Service.exe

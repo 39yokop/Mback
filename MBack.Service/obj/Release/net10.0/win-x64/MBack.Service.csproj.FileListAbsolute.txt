@@ -240,3 +240,8 @@ C:\Users\yokosuka\Nextcloud\developer\MBack\MBack.Service\obj\Release\net10.0\wi
 C:\Users\yokosuka\Nextcloud\developer\MBack\MBack.Service\obj\Release\net10.0\win-x64\MBack.Service.pdb
 C:\Users\yokosuka\Nextcloud\developer\MBack\MBack.Service\obj\Release\net10.0\win-x64\MBack.Service.genruntimeconfig.cache
 C:\Users\yokosuka\Nextcloud\developer\MBack\MBack.Service\obj\Release\net10.0\win-x64\ref\MBack.Service.dll
+C:\Users\yokosuka\Nextcloud\developer\MBack\MBack.Service\bin\Release\net10.0\win-x64\Microsoft.Data.Sqlite.dll
+C:\Users\yokosuka\Nextcloud\developer\MBack\MBack.Service\bin\Release\net10.0\win-x64\SQLitePCLRaw.batteries_v2.dll
+C:\Users\yokosuka\Nextcloud\developer\MBack\MBack.Service\bin\Release\net10.0\win-x64\SQLitePCLRaw.core.dll
+C:\Users\yokosuka\Nextcloud\developer\MBack\MBack.Service\bin\Release\net10.0\win-x64\SQLitePCLRaw.provider.e_sqlite3.dll
+C:\Users\yokosuka\Nextcloud\developer\MBack\MBack.Service\bin\Release\net10.0\win-x64\e_sqlite3.dll
