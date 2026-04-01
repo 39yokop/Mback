@@ -1,7 +1,7 @@
 {
   "version": 3,
   "targets": {
-    "net10.0": {
+    "net10.0-windows7.0": {
       "Microsoft.Data.Sqlite/10.0.3": {
         "type": "package",
         "dependencies": {
@@ -628,12 +628,6 @@
         },
         "build": {
           "buildTransitive/net8.0/_._": {}
-        }
-      },
-      "Microsoft.NET.ILLink.Tasks/10.0.2": {
-        "type": "package",
-        "build": {
-          "build/Microsoft.NET.ILLink.Tasks.props": {}
         }
       },
       "Serilog/4.3.0": {
@@ -855,10 +849,10 @@
           "SQLitePCLRaw.core": "2.1.11"
         },
         "compile": {
-          "lib/net6.0/SQLitePCLRaw.provider.e_sqlite3.dll": {}
+          "lib/net6.0-windows7.0/SQLitePCLRaw.provider.e_sqlite3.dll": {}
         },
         "runtime": {
-          "lib/net6.0/SQLitePCLRaw.provider.e_sqlite3.dll": {}
+          "lib/net6.0-windows7.0/SQLitePCLRaw.provider.e_sqlite3.dll": {}
         }
       },
       "System.Diagnostics.EventLog/10.0.2": {
@@ -932,7 +926,7 @@
         }
       }
     },
-    "net10.0/win-x64": {
+    "net10.0-windows7.0/win-x64": {
       "Microsoft.Data.Sqlite/10.0.3": {
         "type": "package",
         "dependencies": {
@@ -1561,12 +1555,6 @@
           "buildTransitive/net8.0/_._": {}
         }
       },
-      "Microsoft.NET.ILLink.Tasks/10.0.2": {
-        "type": "package",
-        "build": {
-          "build/Microsoft.NET.ILLink.Tasks.props": {}
-        }
-      },
       "Serilog/4.3.0": {
         "type": "package",
         "compile": {
@@ -1695,10 +1683,10 @@
           "SQLitePCLRaw.core": "2.1.11"
         },
         "compile": {
-          "lib/net6.0/SQLitePCLRaw.provider.e_sqlite3.dll": {}
+          "lib/net6.0-windows7.0/SQLitePCLRaw.provider.e_sqlite3.dll": {}
         },
         "runtime": {
-          "lib/net6.0/SQLitePCLRaw.provider.e_sqlite3.dll": {}
+          "lib/net6.0-windows7.0/SQLitePCLRaw.provider.e_sqlite3.dll": {}
         }
       },
       "System.Diagnostics.EventLog/10.0.2": {
@@ -2680,56 +2668,6 @@
         "useSharedDesignerContext.txt"
       ]
     },
-    "Microsoft.NET.ILLink.Tasks/10.0.2": {
-      "sha512": "sXdDtMf2qcnbygw9OdE535c2lxSxrZP8gO4UhDJ0xiJbl1wIqXS1OTcTDFTIJPOFd6Mhcm8gPEthqWGUxBsTqw==",
-      "type": "package",
-      "path": "microsoft.net.illink.tasks/10.0.2",
-      "hasTools": true,
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "Icon.png",
-        "Sdk/Sdk.props",
-        "THIRD-PARTY-NOTICES.TXT",
-        "analyzers/dotnet/cs/ILLink.CodeFixProvider.dll",
-        "analyzers/dotnet/cs/ILLink.RoslynAnalyzer.dll",
-        "build/Microsoft.NET.ILLink.Analyzers.props",
-        "build/Microsoft.NET.ILLink.Tasks.props",
-        "build/Microsoft.NET.ILLink.targets",
-        "microsoft.net.illink.tasks.10.0.2.nupkg.sha512",
-        "microsoft.net.illink.tasks.nuspec",
-        "tools/net/ILLink.Tasks.deps.json",
-        "tools/net/ILLink.Tasks.dll",
-        "tools/net/Mono.Cecil.Mdb.dll",
-        "tools/net/Mono.Cecil.Pdb.dll",
-        "tools/net/Mono.Cecil.Rocks.dll",
-        "tools/net/Mono.Cecil.dll",
-        "tools/net/Sdk/Sdk.props",
-        "tools/net/build/Microsoft.NET.ILLink.Analyzers.props",
-        "tools/net/build/Microsoft.NET.ILLink.Tasks.props",
-        "tools/net/build/Microsoft.NET.ILLink.targets",
-        "tools/net/illink.deps.json",
-        "tools/net/illink.dll",
-        "tools/net/illink.runtimeconfig.json",
-        "tools/netframework/ILLink.Tasks.dll",
-        "tools/netframework/ILLink.Tasks.dll.config",
-        "tools/netframework/Mono.Cecil.Mdb.dll",
-        "tools/netframework/Mono.Cecil.Pdb.dll",
-        "tools/netframework/Mono.Cecil.Rocks.dll",
-        "tools/netframework/Mono.Cecil.dll",
-        "tools/netframework/Sdk/Sdk.props",
-        "tools/netframework/System.Buffers.dll",
-        "tools/netframework/System.Collections.Immutable.dll",
-        "tools/netframework/System.Memory.dll",
-        "tools/netframework/System.Numerics.Vectors.dll",
-        "tools/netframework/System.Reflection.Metadata.dll",
-        "tools/netframework/System.Runtime.CompilerServices.Unsafe.dll",
-        "tools/netframework/build/Microsoft.NET.ILLink.Analyzers.props",
-        "tools/netframework/build/Microsoft.NET.ILLink.Tasks.props",
-        "tools/netframework/build/Microsoft.NET.ILLink.targets",
-        "useSharedDesignerContext.txt"
-      ]
-    },
     "Serilog/4.3.0": {
       "sha512": "+cDryFR0GRhsGOnZSKwaDzRRl4MupvJ42FhCE4zhQRVanX0Jpg6WuCBk59OVhVDPmab1bB+nRykAnykYELA9qQ==",
       "type": "package",
@@ -3067,11 +3005,10 @@
     }
   },
   "projectFileDependencyGroups": {
-    "net10.0": [
+    "net10.0-windows7.0": [
       "Microsoft.Data.Sqlite >= 10.0.3",
       "Microsoft.Extensions.Hosting >= 10.0.2",
       "Microsoft.Extensions.Hosting.WindowsServices >= 10.0.2",
-      "Microsoft.NET.ILLink.Tasks >= 10.0.2",
       "Serilog.Extensions.Hosting >= 10.0.0",
       "Serilog.Sinks.Console >= 6.1.1",
       "Serilog.Sinks.File >= 7.0.0",
@@ -3082,28 +3019,26 @@
     "C:\\Users\\yokosuka\\.nuget\\packages\\": {}
   },
   "project": {
-    "version": "2.0.0",
+    "version": "2.0.1",
     "restore": {
-      "projectUniqueName": "C:\\Users\\yokosuka\\Nextcloud\\developer\\MBack\\MBack.Service\\MBack.Service.csproj",
+      "projectUniqueName": "D:\\Users\\yokosuka\\Nextcloud\\developer\\MBack\\MBack.Service\\MBack.Service.csproj",
       "projectName": "MBack.Service",
-      "projectPath": "C:\\Users\\yokosuka\\Nextcloud\\developer\\MBack\\MBack.Service\\MBack.Service.csproj",
+      "projectPath": "D:\\Users\\yokosuka\\Nextcloud\\developer\\MBack\\MBack.Service\\MBack.Service.csproj",
       "packagesPath": "C:\\Users\\yokosuka\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\yokosuka\\Nextcloud\\developer\\MBack\\MBack.Service\\obj\\",
+      "outputPath": "D:\\Users\\yokosuka\\Nextcloud\\developer\\MBack\\MBack.Service\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\yokosuka\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        "C:\\Users\\yokosuka\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
-        "net10.0"
+        "net10.0-windows"
       ],
       "sources": {
-        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
-        "net10.0": {
-          "targetAlias": "net10.0",
+        "net10.0-windows7.0": {
+          "targetAlias": "net10.0-windows",
           "projectReferences": {}
         }
       },
@@ -3120,8 +3055,8 @@
       "SdkAnalysisLevel": "10.0.100"
     },
     "frameworks": {
-      "net10.0": {
-        "targetAlias": "net10.0",
+      "net10.0-windows7.0": {
+        "targetAlias": "net10.0-windows",
         "dependencies": {
           "Microsoft.Data.Sqlite": {
             "target": "Package",
@@ -3134,12 +3069,6 @@
           "Microsoft.Extensions.Hosting.WindowsServices": {
             "target": "Package",
             "version": "[10.0.2, )"
-          },
-          "Microsoft.NET.ILLink.Tasks": {
-            "suppressParent": "All",
-            "target": "Package",
-            "version": "[10.0.2, )",
-            "autoReferenced": true
           },
           "Serilog.Extensions.Hosting": {
             "target": "Package",
@@ -3172,15 +3101,15 @@
         "downloadDependencies": [
           {
             "name": "Microsoft.AspNetCore.App.Runtime.win-x64",
-            "version": "[10.0.2, 10.0.2]"
+            "version": "[10.0.3, 10.0.3]"
           },
           {
             "name": "Microsoft.NETCore.App.Runtime.win-x64",
-            "version": "[10.0.2, 10.0.2]"
+            "version": "[10.0.3, 10.0.3]"
           },
           {
             "name": "Microsoft.WindowsDesktop.App.Runtime.win-x64",
-            "version": "[10.0.2, 10.0.2]"
+            "version": "[10.0.3, 10.0.3]"
           }
         ],
         "frameworkReferences": {
@@ -3188,7 +3117,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.102/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.CSharp": "(,4.7.32767]",
           "Microsoft.VisualBasic": "(,10.4.32767]",

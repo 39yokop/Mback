@@ -1,27 +1,25 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\yokosuka\\Nextcloud\\developer\\MBack\\MBack.Config\\MBack.Config.csproj": {}
+    "D:\\Users\\yokosuka\\Nextcloud\\developer\\MBack\\MBack.Config\\MBack.Config.csproj": {}
   },
   "projects": {
-    "C:\\Users\\yokosuka\\Nextcloud\\developer\\MBack\\MBack.Config\\MBack.Config.csproj": {
+    "D:\\Users\\yokosuka\\Nextcloud\\developer\\MBack\\MBack.Config\\MBack.Config.csproj": {
       "version": "2.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\yokosuka\\Nextcloud\\developer\\MBack\\MBack.Config\\MBack.Config.csproj",
+        "projectUniqueName": "D:\\Users\\yokosuka\\Nextcloud\\developer\\MBack\\MBack.Config\\MBack.Config.csproj",
         "projectName": "MBack.Config",
-        "projectPath": "C:\\Users\\yokosuka\\Nextcloud\\developer\\MBack\\MBack.Config\\MBack.Config.csproj",
+        "projectPath": "D:\\Users\\yokosuka\\Nextcloud\\developer\\MBack\\MBack.Config\\MBack.Config.csproj",
         "packagesPath": "C:\\Users\\yokosuka\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\yokosuka\\Nextcloud\\developer\\MBack\\MBack.Config\\obj\\",
+        "outputPath": "D:\\Users\\yokosuka\\Nextcloud\\developer\\MBack\\MBack.Config\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\yokosuka\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "C:\\Users\\yokosuka\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net10.0-windows"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -50,12 +48,6 @@
               "target": "Package",
               "version": "[10.0.3, )"
             },
-            "Microsoft.NET.ILLink.Tasks": {
-              "suppressParent": "All",
-              "target": "Package",
-              "version": "[10.0.2, )",
-              "autoReferenced": true
-            },
             "System.ServiceProcess.ServiceController": {
               "target": "Package",
               "version": "[10.0.2, )"
@@ -72,20 +64,6 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "downloadDependencies": [
-            {
-              "name": "Microsoft.AspNetCore.App.Runtime.win-x64",
-              "version": "[10.0.2, 10.0.2]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Runtime.win-x64",
-              "version": "[10.0.2, 10.0.2]"
-            },
-            {
-              "name": "Microsoft.WindowsDesktop.App.Runtime.win-x64",
-              "version": "[10.0.2, 10.0.2]"
-            }
-          ],
           "frameworkReferences": {
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
@@ -94,7 +72,7 @@
               "privateAssets": "none"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.102/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",
@@ -385,11 +363,6 @@
             "System.Xml.XPath": "(,4.3.32767]",
             "System.Xml.XPath.XDocument": "(,5.0.32767]"
           }
-        }
-      },
-      "runtimes": {
-        "win-x64": {
-          "#import": []
         }
       }
     }

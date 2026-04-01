@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MBack.Config")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("2.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("2.0.0+65a62806a0e167c627601d82ccf875b125b554af")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("2.0.0+544cee39ae728e6eedd8eb0eb2f0ede937b16280")]
 [assembly: System.Reflection.AssemblyProductAttribute("MBack.Config")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MBack.Config")]
 [assembly: System.Reflection.AssemblyVersionAttribute("2.0.0.0")]

@@ -1,12 +1,24 @@
 <Project Sdk="Microsoft.NET.Sdk.Worker">
 
   <PropertyGroup>
-    <Version>2.0.0</Version>
-    <TargetFramework>net10.0</TargetFramework>
+    <Version>2.0.1</Version>
+    <TargetFramework>net10.0-windows</TargetFramework>
+
+    <!-- ★修正: win-x64を明示してe_sqlite3.dllが必ずbin配下に出力されるようにする -->
+    <!-- これが無いとWindowsサービスの実行コンテキストでDLLが見つからず落ちる   -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+
+    <!-- SingleFileにするとDLL解決が複雑になるため、あえてfalseにする -->
+    <PublishSingleFile>false</PublishSingleFile>
+
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>dotnet-MBack.Service-cee70bc9-6a34-4b18-b495-f54151befebd</UserSecretsId>
     <ApplicationIcon>app.ico</ApplicationIcon>
+
+    <!-- ★修正: Windowsサービスとして動かすためWindowsターゲットを明示 -->
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,4 +30,5 @@
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageReference Include="System.IO.FileSystem.AccessControl" Version="5.0.0" />
   </ItemGroup>
+
 </Project>
